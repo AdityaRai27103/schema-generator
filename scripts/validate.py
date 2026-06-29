@@ -45,8 +45,12 @@ REQUIRED = {
         "any_of": ["contentUrl", "embedUrl"],
     },
     "ImageObject": {"all": ["url"]},
-    "ListItem": {"all": ["position", "name"]},  # 'item' handled specially (last item exempt)
-    "Offer": {"all": ["price", "priceCurrency"]},
+    "ListItem": {"all": ["position"], "any_of": ["name", "item"]},
+    "Service": {"all": ["name"]},
+    "OfferCatalog": {"all": ["name", "itemListElement"]},
+    "ItemList": {"all": ["itemListElement"]},
+    # Offer is handled specially: a priced offer (Product/Event) needs price+priceCurrency,
+    # but an Offer used as an OfferCatalog entry just wraps itemOffered and has no price.
 }
 
 DATE_PROPS = {"datePublished", "dateModified", "startDate", "endDate",
@@ -221,6 +225,15 @@ def main():
         t = node.get("@type")
         if t == "BreadcrumbList":
             check_breadcrumb(node)
+        if t == "Offer":
+            # A priced offer needs both price and priceCurrency together; a catalog
+            # Offer (just wrapping itemOffered) needs neither.
+            has_price, has_cur = "price" in node, "priceCurrency" in node
+            if has_price != has_cur:
+                missing = "priceCurrency" if has_price else "price"
+                err(f'Offer has one of price/priceCurrency but not the other (missing "{missing}").')
+            if not has_price and "itemOffered" not in node:
+                err('Offer must have either a price (with priceCurrency) or an itemOffered.')
         # @id reference integrity: a pure {"@id": x} reference must resolve.
         if set(node.keys()) == {"@id"}:
             if node["@id"] not in defined_ids:

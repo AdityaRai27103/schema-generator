@@ -13,7 +13,9 @@ All values shown as `{{ Field Name }}` are CMS-binding placeholders (see webflow
 6. [FAQPage](#faqpage)
 7. [Person / ProfilePage](#person--profilepage)
 8. [Product](#product)
-9. [The full graph: how nodes wire together](#the-full-graph)
+9. [Service + OfferCatalog](#service--offercatalog)
+10. [ItemList](#itemlist)
+11. [The full graph: how nodes wire together](#the-full-graph)
 
 ---
 
@@ -213,6 +215,74 @@ Only when there's a real price, rating, or review — otherwise it warns and ear
     "availability": "https://schema.org/InStock",
     "url": "https://www.goodera.com/solutions/{{ Slug }}"
   }
+}
+```
+
+---
+
+## Service + OfferCatalog
+This is the high-value pattern for Goodera's offering / solution / "what we do" pages (e.g. the Help Center, solutions pages). It models *what Goodera provides* and *the menu of options* — capturing the real depth of the page instead of stopping at a bare WebPage.
+
+**Important:** `Service` and `OfferCatalog` are **not** Google rich-result types — they won't draw a SERP visual. But they are valid schema.org, they consolidate Goodera's entity, and they feed Google's Knowledge Graph and AI Overviews / LLM answers, which increasingly drive discovery. Emit them whenever the page genuinely describes a service and its options. Every value must be backed by visible page content — don't invent service types, prices, or regions.
+
+`Service`
+- **Required:** `name`
+- **Recommended:** `provider` (→ Organization `@id`, never a duplicated Organization), `serviceType`, `description`, `areaServed`, `hasOfferCatalog`
+- **`areaServed`:** an array of `Country`/`Place` objects — only the regions explicitly stated on the page.
+- **`hasOfferCatalog`:** an `OfferCatalog` listing the distinct options.
+
+`OfferCatalog`
+- **Required:** `name`, `itemListElement` (array of `Offer`)
+- Each `Offer` wraps an `itemOffered` (a `Service` with `name` + `description`).
+
+```json
+{
+  "@type": "Service",
+  "@id": "https://www.goodera.com/help-center/#service",
+  "name": "Goodera Corporate Volunteering Experiences",
+  "serviceType": "Corporate volunteering programs",
+  "description": "{{ short page summary }}",
+  "provider": { "@id": "https://www.goodera.com/#organization" },
+  "areaServed": [
+    { "@type": "Country", "name": "United States" },
+    { "@type": "Country", "name": "India" }
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Volunteering experience formats",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "In-person volunteering",
+          "description": "Hands-on impact at nonprofit locations, schools, shelters, or community sites."
+        }
+      }
+    ]
+  }
+}
+```
+
+Wire the page's `WebPage.about` to this Service's `@id`, and the Service's `provider` back to the Organization `@id`. One canonical Organization, referenced everywhere.
+
+---
+
+## ItemList
+Use for an ordered/unordered set the page presents as a list — e.g. a category index, a "use cases" grid, a directory of links. Not a rich result on its own (except the Carousel pattern for specific types), but valid and useful for structure.
+
+- **Required:** `itemListElement` (array of `ListItem`); each `ListItem` needs `position` and either `name` or `item`.
+- **Allowed:** `name`, `numberOfItems`, `itemListOrder`.
+
+```json
+{
+  "@type": "ItemList",
+  "@id": "https://www.goodera.com/help-center/#usecases",
+  "name": "Volunteering use cases",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Volunteering with children & family" },
+    { "@type": "ListItem", "position": 2, "name": "Team meetings & offsites" }
+  ]
 }
 ```
 

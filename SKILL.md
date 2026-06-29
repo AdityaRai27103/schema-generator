@@ -56,6 +56,18 @@ Assemble, in this order:
 
 Wire them together with `@id` references (e.g. an Article's `isPartOf` points at the WebPage `@id`, `publisher` points at the Organization `@id`). The worked examples show the exact wiring.
 
+**Go for depth, not just the valid floor.** The minimal graph (Organization + WebSite + WebPage) is the *floor*, not the goal. Read the page and model the meaningful entities that are actually on it — they make the markup far more useful for Google's Knowledge Graph and AI Overviews, which increasingly drive discovery:
+
+- A page describing **what Goodera offers** (solutions, Help Center, "experiences") → add a `Service` with `provider` → Organization, `serviceType`, `areaServed` (only regions stated on the page), and a `hasOfferCatalog` listing the distinct options. See schema-types.md → Service.
+- A page presenting a **list/grid** (use cases, categories, a directory) → add an `ItemList`.
+- A genuine **Q&A list** → `FAQPage`. A real **event** → `Event`. And so on.
+
+The discipline that keeps depth valid — every added node must clear **both** bars:
+1. **Backed by visible content.** Model the formats, regions, and steps the page actually shows. Never invent service types, prices, or `areaServed` countries to look thorough. Unverifiable richness is a content-mismatch risk.
+2. **Valid and modern.** Absolute `https://` URLs everywhere (never relative like `/help-center`). Reference the Organization by `@id` — never paste a second copy. **Do not use deprecated types** — notably `HowTo` (Google removed HowTo rich results in 2023); if a page has a "how it works" process, describe it in `Service.description` text rather than emitting a HowTo that earns nothing.
+
+Richer is better only when it's true and valid. A `Service` + `OfferCatalog` won't draw a SERP visual the way Article/Event do, but it's valid schema.org and strengthens the entity — so include it when the content supports it.
+
 ### Phase 4 — Video pass (run on every page)
 
 Scan the fetched page for video: YouTube/Vimeo `<iframe>`s, Webflow Video or Background-video components, `<video>` tags, or "watch"/play-button UI. If any exists, read `references/video-schema.md` and add a `VideoObject`. This is what gets the page into Google's video index and Search Console video reports, so don't skip it — but only emit it if a real video is present.
