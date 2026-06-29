@@ -15,7 +15,9 @@ All values shown as `{{ Field Name }}` are CMS-binding placeholders (see webflow
 8. [Product](#product)
 9. [Service + OfferCatalog](#service--offercatalog)
 10. [ItemList](#itemlist)
-11. [The full graph: how nodes wire together](#the-full-graph)
+11. [CollectionPage](#collectionpage)
+12. [DefinedTermSet / DefinedTerm (glossaries)](#definedtermset--definedterm)
+13. [The full graph: how nodes wire together](#the-full-graph)
 
 ---
 
@@ -285,6 +287,48 @@ Use for an ordered/unordered set the page presents as a list — e.g. a category
   ]
 }
 ```
+
+---
+
+## CollectionPage
+Use **instead of `WebPage`** when the page's main job is to present a *collection/list* of things — a glossary, a blog index, a directory, a resource hub. Same properties as WebPage, plus `mainEntity` pointing at the list/set the page is built around.
+
+- **Required:** `@id`, `url`, `name`
+- **Recommended:** `isPartOf` (→ WebSite), `about` (→ Organization), `mainEntity` (→ the ItemList / DefinedTermSet `@id`), `breadcrumb`, `description`
+- Everything valid on WebPage is valid here.
+
+---
+
+## DefinedTermSet / DefinedTerm
+The correct modeling for a **glossary / terminology page** — far better than a bare `ItemList` of names, because it captures that each entry is a *defined term with a definition*. Neither is a Google rich-result type (no SERP visual), but they're the right schema.org types and feed Knowledge Graph / AI answers, where glossaries get surfaced.
+
+`DefinedTermSet` — the glossary as a whole.
+- **Required:** `name`
+- **Recommended:** `description`, `@id`. The member terms usually link *up* to the set via `inDefinedTermSet` (see below) rather than being inlined in a `hasDefinedTerm` array — this is what makes the per-item CMS pattern work.
+
+`DefinedTerm` — one entry.
+- **Required:** `name`, `inDefinedTermSet` (the set's `@id` URL, as a string or `{ "@id": … }`)
+- **Recommended:** `description` (the definition — plain text, never rich-text HTML), `url` (if the term has its own page), `termCode`
+
+```json
+{
+  "@type": "DefinedTermSet",
+  "@id": "https://www.goodera.com/glossary/#definedtermset",
+  "name": "Goodera Social Impact & CSR Glossary",
+  "description": "Plain-language definitions for the CSR, ESG, sustainability, social impact, and AI terms used across Goodera."
+}
+```
+
+```json
+{
+  "@type": "DefinedTerm",
+  "name": "Carbon Neutrality",
+  "description": "A state in which net carbon dioxide emissions are zero, achieved by balancing emissions with removal or offsetting.",
+  "inDefinedTermSet": "https://www.goodera.com/glossary/#definedtermset"
+}
+```
+
+**Static list vs. auto-updating CMS list:** if the page is a Webflow Collection List (one static page rendering many CMS items, like /glossary), don't hand-list the terms — they go stale. Use the per-item Embed pattern in webflow-cms-binding.md → "Collection List pages" so each published term renders its own server-side `DefinedTerm` automatically.
 
 ---
 

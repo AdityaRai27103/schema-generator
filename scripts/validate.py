@@ -49,6 +49,9 @@ REQUIRED = {
     "Service": {"all": ["name"]},
     "OfferCatalog": {"all": ["name", "itemListElement"]},
     "ItemList": {"all": ["itemListElement"]},
+    "CollectionPage": {"all": ["url", "name"]},
+    "DefinedTermSet": {"all": ["name"]},
+    "DefinedTerm": {"all": ["name", "inDefinedTermSet"]},
     # Offer is handled specially: a priced offer (Product/Event) needs price+priceCurrency,
     # but an Offer used as an OfferCatalog entry just wraps itemOffered and has no price.
 }
@@ -201,9 +204,16 @@ def main():
     # --- structure ---
     if data.get("@context") not in ("https://schema.org", "http://schema.org"):
         err('Top level must have "@context": "https://schema.org".')
-    graph = data.get("@graph")
-    if not isinstance(graph, list):
-        err('Top level must contain a "@graph" array.')
+    if "@graph" in data:
+        graph = data["@graph"]
+        if not isinstance(graph, list):
+            err('"@graph" must be an array.')
+            graph = []
+    elif "@type" in data:
+        # A single standalone node (e.g. a per-item Collection List Embed). Validate it directly.
+        graph = [{k: v for k, v in data.items() if k != "@context"}]
+    else:
+        err('Top level must contain either a "@graph" array or a single typed node.')
         graph = []
 
     defined_ids = set()

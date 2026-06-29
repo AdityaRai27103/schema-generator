@@ -33,7 +33,12 @@ If no URL is given, ask for one. You cannot generate accurate, page-specific sch
 
 1. **Fetch the page** with WebFetch. Read the actual rendered content: the `<h1>`, headings, body copy, author/date bylines, breadcrumb trail, images, embedded videos, FAQ accordions, event details. The schema must describe *what is genuinely on the page* — Google penalizes markup that doesn't match visible content.
 
-2. **Determine static vs. dynamic.** A CMS Collection template page (e.g. one blog post, one event) is templated — its schema must use Webflow field bindings, not hard-coded values. The live URL alone often can't tell you. If the URL looks like a collection item (`/blog/<slug>`, `/events/<slug>`, `/activities/<slug>`) or you're unsure, **ask the user**: *"Is this a static page or one item of a Webflow CMS Collection template?"*
+2. **Determine which of three kinds of page this is** — it changes everything downstream. If you're unsure, **ask the user**.
+   - **(a) Static page** — fixed content (home, about, a landing page). Schema uses literal values.
+   - **(b) CMS Collection *template*** — one page *per* item (`/blog/<slug>`, `/events/<slug>`). Describes ONE item; schema uses Webflow field bindings.
+   - **(c) CMS Collection *List* page** — ONE static page rendering MANY items through a Collection List (`/glossary`, a blog index, a resource hub). The schema is a list/set; to keep it from going stale, it's generated as a static skeleton + a per-item Embed that auto-updates with the collection. See webflow-cms-binding.md → "Collection List pages."
+
+   Tell-tale: a single URL showing a grid/list of many CMS-driven cards is (c), not (a). A glossary or index page is almost always (c).
 
 3. **Pick the primary type.** Read `references/google-supported-types.md` and choose exactly **one** primary type that matches the page's main purpose (Article for a blog post, Event for an event, etc.). Don't force a type onto a page that doesn't fit — if nothing matches, a `WebPage` node plus Organization is the honest, valid floor.
 
@@ -75,7 +80,8 @@ Scan the fetched page for video: YouTube/Vimeo `<iframe>`s, Webflow Video or Bac
 ### Phase 5 — Static values vs. CMS bindings
 
 - **Static page:** fill every property with the literal text/URL/date you read from the page.
-- **CMS Collection template:** read `references/webflow-cms-binding.md`. Output the JSON-LD with `{{ Field Name }}` placeholders at each dynamic slot, then give the user a short binding table: which Webflow CMS field maps to each placeholder, and the gotchas (ISO 8601 dates, plain-text vs. rich-text fields, absolute URLs from the item Slug). The user wires these via **+ Add Field** in the Webflow Embed; you produce the template and the map.
+- **CMS Collection template (one item per page):** read `references/webflow-cms-binding.md`. Output the JSON-LD with `{{ Field Name }}` placeholders at each dynamic slot, then give the user a short binding table: which Webflow CMS field maps to each placeholder, and the gotchas (ISO 8601 dates, plain-text vs. rich-text fields, absolute URLs from the item Slug). The user wires these via **+ Add Field** in the Webflow Embed; you produce the template and the map.
+- **CMS Collection List (many items on one page):** read webflow-cms-binding.md → "Collection List pages." Deliver **two** Embeds — a static skeleton (`CollectionPage` + empty `DefinedTermSet`/`ItemList`) and a per-item Embed (e.g. a `DefinedTerm`) that goes inside the Collection List Item and links back by `@id`. Don't hand-list the items, and don't propose a client-side JS scraper — the per-item server-side Embed auto-updates and is what Google trusts. Give the binding table for the per-item fields.
 
 ### Phase 6 — Validate, then deliver
 

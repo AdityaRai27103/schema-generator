@@ -32,6 +32,37 @@ A Collection template page is rendered once per CMS item. Its schema must pull v
 - **Referenced fields (Author, Category).** You can pull fields from a single-reference field (e.g. Author → Name, Author → Profile URL) via + Add Field. Multi-reference fields can't be looped in a static script — don't try to enumerate them.
 - **Item-specific `@id`.** Make every node's `@id` unique per item by including `{{ Slug }}`, e.g. `https://www.goodera.com/blog/{{ Slug }}/#article`. This keeps each published item's graph self-consistent.
 
+## Collection List pages (many CMS items on ONE static page)
+
+This is a different case from a Collection *template*. A page like `/glossary` or a blog index is a **single static page** that renders many CMS items through a **Collection List** element. Hand-listing every item in the schema means it goes stale the moment someone adds a CMS entry. The fix is to let Webflow render one schema fragment **per item, server-side**, so the markup auto-updates with the collection — no JavaScript, no DOM scraping.
+
+**Why not client-side JavaScript?** A JS snippet that scrapes `.w-dyn-item` cards and injects JSON-LD on load is fragile (breaks when the design's classes change) and second-class for SEO: Google picks up JS-injected structured data only in its later rendering wave, and `validator.schema.org` (which fetches static HTML) can't see it at all. Server-rendered Embeds avoid all of that.
+
+**The two-Embed pattern:**
+
+1. **Skeleton Embed** — static, in Page Settings → Custom Code (head) or an Embed at the top of the page. Holds the `@graph` with Organization, WebSite, a `CollectionPage`, BreadcrumbList, and the **empty** `DefinedTermSet` / `ItemList` container (no items inlined). Its `@id` is what the per-item fragments link to.
+
+2. **Per-item Embed** — placed **inside the Collection List Item** (so Webflow repeats it once per entry). It emits one *standalone* `<script type="application/ld+json">` containing a single item (e.g. a `DefinedTerm`) that links back to the container by `@id`. Bind its fields with **+ Add Field**.
+
+```html
+<!-- Embed B: inside the Collection List Item, repeats per term -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DefinedTerm",
+  "name": "{{ Term Name }}",
+  "description": "{{ Definition (plain text) }}",
+  "inDefinedTermSet": "https://www.goodera.com/glossary/#definedtermset"
+}
+</script>
+```
+
+Each item is **its own valid JSON-LD block** — so there is no array and therefore no trailing-comma problem (the classic Webflow list-schema headache). Google merges all the `DefinedTerm`s into the `DefinedTermSet` because they share its `@id` via `inDefinedTermSet`. Add a CMS term → a new server-rendered `DefinedTerm` appears automatically.
+
+**Validate both halves:** run the skeleton through `scripts/validate.py`, and run one filled-in sample of the per-item block through it too (it accepts a single top-level node, not just a `@graph`). Use `--cms` so the `{{ }}` placeholders don't trip it.
+
+Generalizes beyond glossaries: blog index → `CollectionPage` + per-item `BlogPosting`; resource hub → `ItemList` + per-item entries. Same skeleton-plus-repeating-Embed shape.
+
 ## What stays static even on a CMS page
 
 The **Organization** node (`assets/organization-schema.json`) and the **WebSite** node are identical on every item — paste them as literal values, no placeholders. Only the page-specific nodes (WebPage, BreadcrumbList, the primary type, VideoObject) take CMS bindings.
