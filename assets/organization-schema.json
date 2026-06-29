@@ -1,0 +1,43 @@
+{
+  "@type": "Organization",
+  "@id": "https://www.goodera.com/#organization",
+  "name": "Goodera",
+  "url": "https://www.goodera.com",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://cdn.prod.website-files.com/62dadf7d66e2fb7047b69c6d/679b68f25d57d3c09048b9e0_Goodera%20logo.svg",
+    "width": "600",
+    "height": "60"
+  },
+  "description": "Goodera curates and hosts engaging volunteering programs for employees, in partnership with 50K+ nonprofits. We are on a mission to make social impact accessible to every team on the planet.",
+  "address": [
+    {
+      "@type": "PostalAddress",
+      "streetAddress": "Menlo Park Headquarters",
+      "addressLocality": "Menlo Park",
+      "addressRegion": "CA",
+      "postalCode": "94025",
+      "addressCountry": "US"
+    },
+    {
+      "@type": "PostalAddress",
+      "streetAddress": "Bengaluru Office",
+      "addressLocality": "Bengaluru",
+      "postalCode": "560001",
+      "addressCountry": "IN"
+    },
+    {
+      "@type": "PostalAddress",
+      "streetAddress": "Barcelona Office",
+      "addressLocality": "Barcelona",
+      "postalCode": "08001",
+      "addressCountry": "ES"
+    }
+  ],
+  "sameAs": [
+    "https://in.linkedin.com/company/goodera",
+    "https://www.instagram.com/wearegoodera/",
+    "https://www.youtube.com/@Goodera",
+    "https://x.com/wearegoodera"
+  ]
+}
